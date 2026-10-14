@@ -1,0 +1,7 @@
+{
+  "spreads": { "senior": 0.01, "mezz": 0.02 },
+  "proporcoes": { "senior": 0.5, "mezz": 0.3, "sub": 0.2 },
+  "probabilidades": { "Zero": 0, "Remoto": 0.25, "Possível": 0.5, "Provável": 0.75, "Certo": 1 },
+  "margemVeredito": 0.0025,
+  "limites": { "calculosPorHora": 40, "tentativasLogin": 5, "janelaLoginMin": 15, "sessaoHoras": 8 }
+}
