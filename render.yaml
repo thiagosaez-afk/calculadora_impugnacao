@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: calculadora-impugnacao
+    runtime: node
+    plan: starter
+    buildCommand: echo "sem dependencias"
+    startCommand: node server.js
+    healthCheckPath: /saude
+    autoDeploy: false
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: LOG_DIR
+        value: /var/data/logs
+      - key: CONFIG_FILE
+        value: /etc/secrets/config.json
+      - key: ADMIN_EMAIL
+        sync: false
+    disk:
+      name: dados
+      mountPath: /var/data
+      sizeGB: 1
