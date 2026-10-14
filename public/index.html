@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora de Impugnação</title>
+<link rel="stylesheet" href="/estilo.css">
+</head>
+<body>
+<header class="topo">
+  <h1>Calculadora de Impugnação</h1>
+  <div id="sessao" hidden><span id="usuario"></span> <a href="/admin" id="linkAdmin" hidden>Admin</a> <button id="sair" class="link">Sair</button></div>
+</header>
+
+<main>
+  <section id="telaLogin" class="cartao estreito" hidden>
+    <h2>Entrar</h2>
+    <form id="formLogin">
+      <label>E-mail<input type="email" id="email" autocomplete="username" required></label>
+      <label>Senha<input type="password" id="senha" autocomplete="current-password" required></label>
+      <button type="submit">Entrar</button>
+      <p class="erro" id="erroLogin" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="telaCalc" hidden>
+    <form id="formCalc" class="cartao" novalidate>
+      <h2>Caso</h2>
+      <label>Nº da proposta<input id="proposta" maxlength="40"></label>
+
+      <h2>Valores de hoje (R$)</h2>
+      <label>Valor incontroverso
+        <input id="incontroverso" inputmode="decimal" placeholder="324.612,67" required>
+        <small>Valor que já recebemos ou esperamos receber e que não será questionado.</small></label>
+      <label>Valor atualizado
+        <input id="atualizado" inputmode="decimal" placeholder="352.091,51" required>
+        <small>Valor total atualizado para hoje, incluindo a parte contestada.</small></label>
+
+      <h2>Prazos (meses a partir de hoje)</h2>
+      <div class="grade">
+        <label>1º levantamento<input id="mesesPrimeiro" inputmode="numeric" value="1" required></label>
+        <label>Levantamento do controverso<input id="mesesControverso" inputmode="numeric" value="12" required></label>
+        <label>Levantamento único (total)<input id="mesesTotal" inputmode="numeric" value="14" required></label>
+      </div>
+
+      <h2>Valores futuros (R$)</h2>
+      <label>Valor total esperado na data do levantamento do controverso
+        <input id="totalEmN" inputmode="decimal" placeholder="400.622,57" required></label>
+      <label>Valor total esperado na data do levantamento único
+        <input id="totalEmT" inputmode="decimal" placeholder="414.109,73" required>
+        <small>Valores futuros devem ser atualizados para a data em que esperamos receber.</small></label>
+
+      <h2>Probabilidade de êxito no controverso</h2>
+      <label>Probabilidade
+        <select id="probabilidade" required></select>
+        <small>Zero 0%, Remoto 25%, Possível 50%, Provável 75%, Certo 100%.</small></label>
+
+      <button type="submit">Calcular</button>
+      <p class="erro" id="erroCalc" role="alert"></p>
+    </form>
+
+    <section id="resultado" class="cartao" hidden aria-live="polite">
+      <h2>Resultado</h2>
+      <p class="nota" id="eco"></p>
+      <div class="grade2">
+        <article class="cenario" id="cen2">
+          <h3>2 levantamentos</h3>
+          <p class="selo" id="selo2"></p>
+          <dl id="dl2"></dl>
+        </article>
+        <article class="cenario" id="cen1">
+          <h3>1 levantamento</h3>
+          <p class="selo" id="selo1"></p>
+          <dl id="dl1"></dl>
+        </article>
+      </div>
+      <p class="nota">Resultado indicativo, calculado com base em premissas internas. Não substitui a análise da mesa.</p>
+    </section>
+  </section>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>
