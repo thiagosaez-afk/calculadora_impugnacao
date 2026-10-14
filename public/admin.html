@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin | Calculadora de Impugnação</title>
+<link rel="stylesheet" href="/estilo.css">
+</head>
+<body>
+<header class="topo"><h1>Atualizar curvas</h1><a href="/">Voltar à calculadora</a></header>
+<main>
+  <section class="cartao" id="painel" hidden>
+    <p id="estado" class="nota"></p>
+    <form id="form">
+      <label>Data-base (AAAA-MM-DD)<input id="dataBase" placeholder="2026-10-21" required></label>
+      <label>Cole as colunas Data, IPCA e CDI da planilha (tabela completa)
+        <textarea id="texto" rows="12" spellcheck="false" required></textarea></label>
+      <button type="submit">Validar e publicar</button>
+      <p id="msg" role="status"></p>
+    </form>
+    <p class="nota">A curva anterior é guardada em backup antes de ser substituída. Se a validação falhar, nada muda.</p>
+  </section>
+  <section class="cartao" id="painelUsuarios" hidden>
+    <h2>Usuários</h2>
+    <ul id="listaUsuarios"></ul>
+    <form id="formUsuario">
+      <label>E-mail<input id="novoEmail" type="email" required></label>
+      <label>Papel
+        <select id="novoPapel"><option value="parceiro">Parceiro</option><option value="admin">Admin</option></select></label>
+      <button type="submit">Criar ou redefinir senha</button>
+      <p id="msgUsuario" role="status"></p>
+    </form>
+    <p class="nota">A senha provisória aparece uma única vez. Repasse por canal seguro. Criar de novo um e-mail existente redefine a senha e encerra as sessões dele.</p>
+  </section>
+  <section class="cartao estreito" id="negado" hidden><p>Acesso restrito. <a href="/">Entrar</a></p></section>
+</main>
+<script src="/admin.js"></script>
+</body>
+</html>
