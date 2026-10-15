@@ -3,3 +3,5 @@ data/curvas.json
 data/users.json
 data/backup/
 logs/
+logs-servidor.txt
+logs-servidor-erro.txt

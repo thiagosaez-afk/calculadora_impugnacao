@@ -4,56 +4,68 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Calculadora de Impugnação (demonstração)</title>
+<title>Calculadora de Impugnação</title>
 <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
-<header class="topo"><h1>Calculadora de Impugnação</h1><span class="nota">Demonstração das telas</span></header>
+<header class="topo"><h1>Calculadora de Impugnação</h1></header>
 <main>
-  <section class="cartao aviso" role="note">
-    <strong>Página de demonstração.</strong> O cálculo não roda aqui. Ele depende de parâmetros internos que ficam guardados em servidor, e o servidor ainda não está conectado. Os campos abaixo mostram como será a tela, sem calcular nada.
-  </section>
-
-  <fieldset class="cartao" disabled>
+  <form id="formCalc" class="cartao" novalidate>
     <h2>Caso</h2>
-    <label>Nº da proposta<input placeholder="1234"></label>
+    <label>Nº da proposta<input id="proposta" maxlength="40"></label>
 
     <h2>Valores de hoje (R$)</h2>
     <label>Valor incontroverso
-      <input placeholder="0,00">
+      <input id="incontroverso" inputmode="decimal" placeholder="324.612,67" required>
       <small>Valor que já recebemos ou esperamos receber e que não será questionado.</small></label>
     <label>Valor atualizado
-      <input placeholder="0,00">
+      <input id="atualizado" inputmode="decimal" placeholder="352.091,51" required>
       <small>Valor total atualizado para hoje, incluindo a parte contestada.</small></label>
 
     <h2>Prazos (meses a partir de hoje)</h2>
     <div class="grade">
-      <label>1º levantamento<input value="1"></label>
-      <label>Levantamento do controverso<input value="12"></label>
-      <label>Levantamento único (total)<input value="14"></label>
+      <label>1º levantamento<input id="mesesPrimeiro" inputmode="numeric" value="1" required></label>
+      <label>Levantamento do controverso<input id="mesesControverso" inputmode="numeric" value="12" required></label>
+      <label>Levantamento único (total)<input id="mesesTotal" inputmode="numeric" value="14" required></label>
     </div>
 
     <h2>Valores futuros (R$)</h2>
-    <label>Valor total esperado na data do levantamento do controverso<input placeholder="0,00"></label>
-    <label>Valor total esperado na data do levantamento único<input placeholder="0,00">
+    <label>Valor total esperado na data do levantamento do controverso
+      <input id="totalEmN" inputmode="decimal" placeholder="400.622,57" required></label>
+    <label>Valor total esperado na data do levantamento único
+      <input id="totalEmT" inputmode="decimal" placeholder="414.109,73" required>
       <small>Valores futuros devem ser atualizados para a data em que esperamos receber.</small></label>
 
     <h2>Probabilidade de êxito no controverso</h2>
     <label>Probabilidade
-      <select><option>Zero</option><option>Remoto</option><option selected>Possível</option><option>Provável</option><option>Certo</option></select>
+      <select id="probabilidade" required></select>
       <small>Zero 0%, Remoto 25%, Possível 50%, Provável 75%, Certo 100%.</small></label>
 
-    <button type="button">Calcular (indisponível na demonstração)</button>
-  </fieldset>
+    <button type="submit" id="calcular" disabled>Calcular</button>
+    <p class="erro" id="erroCalc" role="alert"></p>
+  </form>
 
-  <section class="cartao">
-    <h2>Como será o resultado</h2>
+  <section id="resultado" class="cartao" hidden aria-live="polite">
+    <h2>Resultado</h2>
+    <p class="nota" id="eco"></p>
     <div class="grade2">
-      <article class="cenario"><h3>2 levantamentos</h3><p class="nota">Selo (Vale contestar, Limítrofe ou Não vale contestar), TIR do ativo e recebimentos esperados.</p></article>
-      <article class="cenario"><h3>1 levantamento</h3><p class="nota">Os mesmos itens para o cenário de levantamento único.</p></article>
+      <article class="cenario">
+        <h3>2 levantamentos</h3>
+        <p class="selo" id="selo2"></p>
+        <dl id="dl2"></dl>
+      </article>
+      <article class="cenario">
+        <h3>1 levantamento</h3>
+        <p class="selo" id="selo1"></p>
+        <dl id="dl1"></dl>
+      </article>
     </div>
-    <p class="nota">Nenhum número aparece nesta página.</p>
+    <p class="nota">Resultado indicativo, calculado com base em premissas internas. Não substitui a análise da mesa.</p>
   </section>
+  <p class="nota" id="rodape"></p>
 </main>
+<script src="motor.js"></script>
+<script src="validacao.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
