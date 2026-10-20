@@ -14,20 +14,31 @@ function valor(v, nome) {
   return v;
 }
 
+function bloco(b, nome) {
+  if (!b || typeof b !== 'object') throw new Error(`Dados do cenário "${nome}" inválidos.`);
+  return b;
+}
+
+function comControverso(b, nome, maxMeses, probabilidades) {
+  const c = bloco(b, nome);
+  const probabilidade = String(c.probabilidade);
+  if (!(probabilidade in probabilidades)) throw new Error(`Probabilidade inválida no cenário "${nome}".`);
+  return {
+    meses: inteiro(c.meses, 1, maxMeses, `Meses até receber tudo (${nome})`),
+    totalEsperado: valor(c.totalEsperado, `Valor total esperado (${nome})`),
+    probabilidade,
+  };
+}
+
 function validarEntrada(b, probabilidades) {
   const e = {
     incontroverso: valor(b.incontroverso, 'Valor incontroverso'),
     atualizado: valor(b.atualizado, 'Valor atualizado'),
-    mesesPrimeiro: inteiro(b.mesesPrimeiro, 1, 120, 'Meses até o 1º levantamento'),
-    mesesControverso: inteiro(b.mesesControverso, 2, 120, 'Meses até o levantamento do controverso'),
-    mesesTotal: inteiro(b.mesesTotal, 2, 120, 'Meses até o levantamento total'),
-    totalEmN: valor(b.totalEmN, 'Valor total esperado no levantamento do controverso'),
-    totalEmT: valor(b.totalEmT, 'Valor total esperado no levantamento total'),
-    probabilidade: String(b.probabilidade),
+    naoImpugnar: { meses: inteiro(bloco(b.naoImpugnar, 'Não impugnar').meses, 1, 120, 'Meses até receber o incontroverso (não impugnar)') },
+    receber6: comControverso(b.receber6, 'até 6 meses', 6, probabilidades),
+    receber12: comControverso(b.receber12, 'até 12 meses', 12, probabilidades),
   };
   if (e.incontroverso > e.atualizado) throw new Error('O valor incontroverso não pode ser maior que o valor atualizado.');
-  if (e.mesesControverso <= e.mesesPrimeiro) throw new Error('O levantamento do controverso deve vir depois do 1º levantamento.');
-  if (!(e.probabilidade in probabilidades)) throw new Error('Probabilidade inválida.');
   return e;
 }
 
@@ -35,24 +46,8 @@ const pct = (x) => (x === null ? null : Math.round(x * 10000) / 10000); // 0,01 
 const reais = (x) => Math.round(x);
 
 function arredondar(pub) {
-  const d = pub.doisLevantamentos;
-  const u = pub.umLevantamento;
-  return {
-    doisLevantamentos: {
-      tirAtivoAm: pct(d.tirAtivoAm),
-      veredito: d.veredito,
-      recebimentoIncontroverso: reais(d.recebimentoIncontroverso),
-      mesIncontroverso: d.mesIncontroverso,
-      controversoEsperado: reais(d.controversoEsperado),
-      mesControverso: d.mesControverso,
-    },
-    umLevantamento: {
-      tirAtivoAm: pct(u.tirAtivoAm),
-      veredito: u.veredito,
-      recebimentoTotalEsperado: reais(u.recebimentoTotalEsperado),
-      mesTotal: u.mesTotal,
-    },
-  };
+  const um = (c) => ({ tirAtivoAm: pct(c.tirAtivoAm), veredito: c.veredito, recebimento: reais(c.recebimento), mes: c.mes });
+  return { naoImpugnar: um(pub.naoImpugnar), receber6: um(pub.receber6), receber12: um(pub.receber12) };
 }
 
 module.exports = { validarEntrada, arredondar };

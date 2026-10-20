@@ -1,7 +1,10 @@
 'use strict';
 // Motor de cálculo da calculadora de impugnação.
-// Reproduz a planilha "Planilha de impugnação_v2" (abas Inputs e Mecânica).
-// Roda só no servidor: config (spreads, proporções) e curvas nunca vão ao navegador.
+// Baseado na planilha "Planilha de impugnação_v2" (abas Inputs e Mecânica).
+// Três cenários, cada um com prazo próprio (e probabilidade própria quando há controverso):
+//   1. não impugnar: recebe só o incontroverso
+//   2. receber tudo em até 6 meses (um levantamento só)
+//   3. receber tudo em até 12 meses (um levantamento só)
 
 const MS_DIA = 86400000;
 
@@ -62,23 +65,19 @@ function veredito(tirSub, tirSenior, margem) {
 
 /**
  * entrada: {
- *   incontroverso, atualizado,            // R$, valores de hoje
- *   mesesPrimeiro, mesesControverso,      // 1º levantamento e levantamento do controverso (a partir de hoje)
- *   mesesTotal,                           // levantamento único (cenário de 1 levantamento)
- *   totalEmN, totalEmT,                   // valor total esperado em N e em T (Inputs E13 e E14)
- *   probabilidade                         // chave: Zero | Remoto | Possível | Provável | Certo
+ *   incontroverso, atualizado,                     // R$, valores de hoje
+ *   naoImpugnar: { meses },                        // mês em que o incontroverso entra
+ *   receber6:  { meses, totalEsperado, probabilidade },   // tudo em um levantamento só
+ *   receber12: { meses, totalEsperado, probabilidade },
  * }
+ * totalEsperado = valor total (incontroverso + controverso) esperado na data do recebimento.
+ * probabilidade = chave: Zero | Remoto | Possível | Provável | Certo (vale só para o controverso).
  */
 function calcular(entrada, config, base) {
   const mapa = indexarCurvas(base.curvas);
   const { incontroverso: inc, atualizado: atu } = entrada;
-  const p = config.probabilidades[entrada.probabilidade];
-  if (p === undefined) throw new ErroCalculo('Probabilidade inválida.');
 
   const hoje = eomonth(parseISO(base.dataBase), 0);
-  const d1 = eomonth(hoje, entrada.mesesPrimeiro);
-  const dN = eomonth(hoje, entrada.mesesControverso);
-  const dT = eomonth(hoje, entrada.mesesTotal);
   const anos = (d) => (d - hoje) / MS_DIA / 365;
   const meses = (d) => 12 * anos(d);
 
@@ -97,58 +96,64 @@ function calcular(entrada, config, base) {
   const seniorEm = (d) => cotaEm(d, sen, sSen);
   const passivoEm = (d) => seniorEm(d) + cotaEm(d, mez, sMez);
 
-  // Cenário 2 levantamentos: incontroverso em d1, controverso esperado em dN
-  const ipca1N = fator(mapa, dN, 'ipca') / fator(mapa, d1, 'ipca');
-  const controversoN = (entrada.totalEmN - inc * ipca1N) * p;
-  const passivo1 = passivoEm(d1);
-  const doisAtivo = tirMensal([[0, -atu], [meses(d1), inc], [meses(dN), controversoN]]);
-  const doisPassivo = tirMensal([[0, -(sen + mez)], [meses(d1), passivo1]]);
-  const doisSenior = tirMensal([[0, -sen], [meses(d1), seniorEm(d1)]]);
-  const doisSub = tirMensal([[0, -sub], [meses(d1), inc - passivo1], [meses(dN), controversoN]]);
+  // Incontroverso corrigido pelo IPCA de hoje até a data d
+  const incontroversoEm = (d) => inc * (fator(mapa, d, 'ipca') / fator(mapa, hoje, 'ipca'));
 
-  // Cenário 1 levantamento: tudo em dT
-  const ipcaT = fator(mapa, dT, 'ipca') / fator(mapa, hoje, 'ipca');
-  const ativoT = inc * ipcaT + (entrada.totalEmT - inc * ipcaT) * p;
-  const passivoT = passivoEm(dT);
-  const umAtivo = tirMensal([[0, -atu], [meses(dT), ativoT]]);
-  const umPassivo = tirMensal([[0, -(sen + mez)], [meses(dT), passivoT]]);
-  const umSenior = tirMensal([[0, -sen], [meses(dT), seniorEm(dT)]]);
-  const umSub = tirMensal([[0, -sub], [meses(dT), ativoT - passivoT]]);
+  const probabilidade = (chave) => {
+    const p = config.probabilidades[chave];
+    if (p === undefined) throw new ErroCalculo('Probabilidade inválida.');
+    return p;
+  };
+
+  // Um recebimento único no mês indicado. Devolve as TIRs de Ativo, Senior, Passivo e Sub.
+  const cenario = (mesesPrazo, recebimentoEm) => {
+    const d = eomonth(hoje, mesesPrazo);
+    const m = meses(d);
+    const recebimento = recebimentoEm(d);
+    const passivo = passivoEm(d);
+    return {
+      mes: mesesPrazo,
+      recebimento,
+      passivoValor: passivo,
+      ativo: tirMensal([[0, -atu], [m, recebimento]]),
+      passivo: tirMensal([[0, -(sen + mez)], [m, passivo]]),
+      senior: tirMensal([[0, -sen], [m, seniorEm(d)]]),
+      sub: tirMensal([[0, -sub], [m, recebimento - passivo]]),
+    };
+  };
+
+  // Com controverso: incontroverso corrigido + (total esperado - incontroverso corrigido) x probabilidade
+  const comControverso = (c) => {
+    const p = probabilidade(c.probabilidade);
+    return cenario(c.meses, (d) => {
+      const incorrigido = incontroversoEm(d);
+      return incorrigido + (c.totalEsperado - incorrigido) * p;
+    });
+  };
+
+  const nao = cenario(entrada.naoImpugnar.meses, incontroversoEm);
+  const c6 = comControverso(entrada.receber6);
+  const c12 = comControverso(entrada.receber12);
 
   const margem = config.margemVeredito;
+  const publico = (c) => ({
+    tirAtivoAm: c.ativo,
+    veredito: veredito(c.sub, c.senior, margem),
+    recebimento: c.recebimento,
+    mes: c.mes,
+  });
+  const interno = (c) => ({
+    passivoTirAm: c.passivo,
+    seniorTirAm: c.senior,
+    subTirAm: c.sub,
+    passivoValor: c.passivoValor,
+  });
+
   return {
     // Vai ao advogado
-    publico: {
-      doisLevantamentos: {
-        tirAtivoAm: doisAtivo,
-        veredito: veredito(doisSub, doisSenior, margem),
-        recebimentoIncontroverso: inc,
-        mesIncontroverso: entrada.mesesPrimeiro,
-        controversoEsperado: controversoN,
-        mesControverso: entrada.mesesControverso,
-      },
-      umLevantamento: {
-        tirAtivoAm: umAtivo,
-        veredito: veredito(umSub, umSenior, margem),
-        recebimentoTotalEsperado: ativoT,
-        mesTotal: entrada.mesesTotal,
-      },
-    },
+    publico: { naoImpugnar: publico(nao), receber6: publico(c6), receber12: publico(c12) },
     // Só para teste e auditoria. Nunca serializar para o cliente.
-    interno: {
-      doisLevantamentos: {
-        passivoTirAm: doisPassivo,
-        seniorTirAm: doisSenior,
-        subTirAm: doisSub,
-        passivoEmD1: passivo1,
-      },
-      umLevantamento: {
-        passivoTirAm: umPassivo,
-        seniorTirAm: umSenior,
-        subTirAm: umSub,
-        passivoEmT: passivoT,
-      },
-    },
+    interno: { naoImpugnar: interno(nao), receber6: interno(c6), receber12: interno(c12) },
   };
 }
 

@@ -36,24 +36,38 @@
         <input id="atualizado" inputmode="decimal" placeholder="352.091,51" required>
         <small>Valor total atualizado para hoje, incluindo a parte contestada.</small></label>
 
-      <h2>Prazos (meses a partir de hoje)</h2>
-      <div class="grade">
-        <label>1º levantamento<input id="mesesPrimeiro" inputmode="numeric" value="1" required></label>
-        <label>Levantamento do controverso<input id="mesesControverso" inputmode="numeric" value="12" required></label>
-        <label>Levantamento único (total)<input id="mesesTotal" inputmode="numeric" value="14" required></label>
-      </div>
+      <section class="bloco">
+        <h2>1. Não impugnar</h2>
+        <p class="nota">Recebe só o incontroverso. Não há controverso nem probabilidade.</p>
+        <label>Meses até receber o incontroverso
+          <input id="n_meses" inputmode="numeric" value="1" required>
+          <small>Prazo em meses a partir de hoje.</small></label>
+      </section>
 
-      <h2>Valores futuros (R$)</h2>
-      <label>Valor total esperado na data do levantamento do controverso
-        <input id="totalEmN" inputmode="decimal" placeholder="400.622,57" required></label>
-      <label>Valor total esperado na data do levantamento único
-        <input id="totalEmT" inputmode="decimal" placeholder="414.109,73" required>
-        <small>Valores futuros devem ser atualizados para a data em que esperamos receber.</small></label>
+      <section class="bloco">
+        <h2>2. Receber tudo em até 6 meses</h2>
+        <p class="nota">Incontroverso e controverso entram juntos, em um levantamento só.</p>
+        <div class="grade">
+          <label>Meses até receber tudo (1 a 6)<input id="c6_meses" inputmode="numeric" value="6" required></label>
+          <label>Probabilidade de êxito no controverso<select id="c6_prob" required></select></label>
+        </div>
+        <label>Valor total esperado na data do recebimento (R$)
+          <input id="c6_total" inputmode="decimal" placeholder="380.000,00" required>
+          <small>Valor total (incontroverso + controverso) já atualizado para a data em que esperamos receber.</small></label>
+      </section>
 
-      <h2>Probabilidade de êxito no controverso</h2>
-      <label>Probabilidade
-        <select id="probabilidade" required></select>
-        <small>Zero 0%, Remoto 25%, Possível 50%, Provável 75%, Certo 100%.</small></label>
+      <section class="bloco">
+        <h2>3. Receber tudo em até 12 meses</h2>
+        <p class="nota">Incontroverso e controverso entram juntos, em um levantamento só.</p>
+        <div class="grade">
+          <label>Meses até receber tudo (1 a 12)<input id="c12_meses" inputmode="numeric" value="12" required></label>
+          <label>Probabilidade de êxito no controverso<select id="c12_prob" required></select></label>
+        </div>
+        <label>Valor total esperado na data do recebimento (R$)
+          <input id="c12_total" inputmode="decimal" placeholder="400.622,57" required>
+          <small>Valor total (incontroverso + controverso) já atualizado para a data em que esperamos receber.</small></label>
+      </section>
+      <p class="nota">Probabilidade: Zero 0%, Remoto 25%, Possível 50%, Provável 75%, Certo 100%.</p>
 
       <button type="submit">Calcular</button>
       <p class="erro" id="erroCalc" role="alert"></p>
@@ -62,17 +76,10 @@
     <section id="resultado" class="cartao" hidden aria-live="polite">
       <h2>Resultado</h2>
       <p class="nota" id="eco"></p>
-      <div class="grade2">
-        <article class="cenario" id="cen2">
-          <h3>2 levantamentos</h3>
-          <p class="selo" id="selo2"></p>
-          <dl id="dl2"></dl>
-        </article>
-        <article class="cenario" id="cen1">
-          <h3>1 levantamento</h3>
-          <p class="selo" id="selo1"></p>
-          <dl id="dl1"></dl>
-        </article>
+      <div class="grade3">
+        <article class="cenario"><h3>1. Não impugnar</h3><p class="selo" id="selo0"></p><dl id="dl0"></dl></article>
+        <article class="cenario"><h3>2. Tudo em até 6 meses</h3><p class="selo" id="selo1"></p><dl id="dl1"></dl></article>
+        <article class="cenario"><h3>3. Tudo em até 12 meses</h3><p class="selo" id="selo2"></p><dl id="dl2"></dl></article>
       </div>
       <p class="nota">Resultado indicativo, calculado com base em premissas internas. Não substitui a análise da mesa.</p>
     </section>

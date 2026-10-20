@@ -118,7 +118,7 @@ async function api(req, res, url) {
       entrada = validarEntrada(b, config.probabilidades);
       const r = calcular(entrada, config, base);
       const pub = arredondar(r.publico);
-      registrar({ evento: 'calculo', email: sessao.email, proposta: String(b.proposta || '').slice(0, 40), entrada, veredito2: pub.doisLevantamentos.veredito, veredito1: pub.umLevantamento.veredito });
+      registrar({ evento: 'calculo', email: sessao.email, proposta: String(b.proposta || '').slice(0, 40), entrada, veredito: { naoImpugnar: pub.naoImpugnar.veredito, receber6: pub.receber6.veredito, receber12: pub.receber12.veredito } });
       return json(res, 200, { ...pub, dataBase: base.dataBase });
     } catch (e) {
       if (e instanceof ErroCalculo || /deve ser|não pode|deve vir|inválid/.test(e.message)) return json(res, 400, { erro: e.message });
@@ -161,7 +161,12 @@ async function api(req, res, url) {
         const curvas = lerCurva(b.texto, b.dataBase);
         const novo = { dataBase: b.dataBase, atualizadoEm: new Date().toISOString().slice(0, 10), curvas };
         // Calcula um caso de teste antes de publicar, para não aceitar curva que quebra o motor
-        calcular({ incontroverso: 100000, atualizado: 120000, mesesPrimeiro: 1, mesesControverso: 12, mesesTotal: 14, totalEmN: 130000, totalEmT: 135000, probabilidade: 'Certo' }, config, novo);
+        calcular({
+          incontroverso: 100000, atualizado: 120000,
+          naoImpugnar: { meses: 1 },
+          receber6: { meses: 6, totalEsperado: 125000, probabilidade: 'Certo' },
+          receber12: { meses: 12, totalEsperado: 130000, probabilidade: 'Certo' },
+        }, config, novo);
         if (fs.existsSync(CURVAS_FILE)) {
           const bak = path.join(DATA_DIR, 'backup');
           fs.mkdirSync(bak, { recursive: true });

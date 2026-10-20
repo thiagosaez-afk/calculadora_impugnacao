@@ -27,9 +27,14 @@ function linhas(dl, pares) {
   }
 }
 
-function selo(el, veredito) {
-  el.textContent = TEXTO[veredito];
-  el.className = `selo ${veredito}`;
+function cartao(i, c, rotuloRecebimento) {
+  const el = $(`selo${i}`);
+  el.textContent = TEXTO[c.veredito];
+  el.className = `selo ${c.veredito}`;
+  linhas($(`dl${i}`), [
+    ['TIR do ativo', c.tirAtivoAm === null ? 'n/d' : `${pct.format(c.tirAtivoAm)} a.m.`],
+    [`${rotuloRecebimento} no mês ${c.mes}`, brl.format(c.recebimento)],
+  ]);
 }
 
 async function iniciar() {
@@ -41,9 +46,11 @@ async function iniciar() {
     $('erroCalc').textContent = 'Não foi possível carregar os parâmetros. Recarregue a página.';
     return;
   }
-  const sel = $('probabilidade');
-  sel.replaceChildren(...Object.keys(parametros.config.probabilidades).map((p) => new Option(p, p)));
-  sel.value = 'Possível';
+  const chaves = Object.keys(parametros.config.probabilidades);
+  for (const id of ['c6_prob', 'c12_prob']) {
+    $(id).replaceChildren(...chaves.map((p) => new Option(p, p)));
+    $(id).value = 'Possível';
+  }
   const [a, m, d] = parametros.base.dataBase.split('-');
   $('rodape').textContent = `Curvas de CDI e IPCA com data-base ${d}/${m}/${a}.`;
   $('calcular').disabled = false;
@@ -56,12 +63,9 @@ $('formCalc').addEventListener('submit', (e) => {
   const corpo = {
     incontroverso: lerValor($('incontroverso').value),
     atualizado: lerValor($('atualizado').value),
-    mesesPrimeiro: Number($('mesesPrimeiro').value),
-    mesesControverso: Number($('mesesControverso').value),
-    mesesTotal: Number($('mesesTotal').value),
-    totalEmN: lerValor($('totalEmN').value),
-    totalEmT: lerValor($('totalEmT').value),
-    probabilidade: $('probabilidade').value,
+    naoImpugnar: { meses: Number($('n_meses').value) },
+    receber6: { meses: Number($('c6_meses').value), totalEsperado: lerValor($('c6_total').value), probabilidade: $('c6_prob').value },
+    receber12: { meses: Number($('c12_meses').value), totalEsperado: lerValor($('c12_total').value), probabilidade: $('c12_prob').value },
   };
   let r;
   try {
@@ -71,20 +75,10 @@ $('formCalc').addEventListener('submit', (e) => {
     $('erroCalc').textContent = err.message || 'Verifique os campos.';
     return;
   }
-  $('eco').textContent = `Considerado: incontroverso ${brl2.format(corpo.incontroverso)}, atualizado ${brl2.format(corpo.atualizado)}, probabilidade ${corpo.probabilidade}.`;
-  const d = r.doisLevantamentos;
-  const u = r.umLevantamento;
-  selo($('selo2'), d.veredito);
-  selo($('selo1'), u.veredito);
-  linhas($('dl2'), [
-    ['TIR do ativo', d.tirAtivoAm === null ? 'n/d' : `${pct.format(d.tirAtivoAm)} a.m.`],
-    [`Recebimento no mês ${d.mesIncontroverso}`, brl.format(d.recebimentoIncontroverso)],
-    [`Controverso esperado no mês ${d.mesControverso}`, brl.format(d.controversoEsperado)],
-  ]);
-  linhas($('dl1'), [
-    ['TIR do ativo', u.tirAtivoAm === null ? 'n/d' : `${pct.format(u.tirAtivoAm)} a.m.`],
-    [`Recebimento esperado no mês ${u.mesTotal}`, brl.format(u.recebimentoTotalEsperado)],
-  ]);
+  $('eco').textContent = `Considerado: incontroverso ${brl2.format(corpo.incontroverso)}, atualizado ${brl2.format(corpo.atualizado)}.`;
+  cartao(0, r.naoImpugnar, 'Recebimento do incontroverso');
+  cartao(1, r.receber6, 'Recebimento esperado');
+  cartao(2, r.receber12, 'Recebimento esperado');
   $('resultado').hidden = false;
   $('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });

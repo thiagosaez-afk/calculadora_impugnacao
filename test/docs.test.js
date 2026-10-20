@@ -1,16 +1,17 @@
 'use strict';
-// Garante que a versão do navegador (docs/) dá o mesmo resultado do motor do servidor e da planilha.
+// Garante que a versão do navegador (docs/) dá o mesmo resultado do motor do servidor.
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { calcular } = require('../src/engine');
 
 const docs = path.join(__dirname, '..', 'docs');
 const temDocs = ['motor.js', 'validacao.js', 'parametros.json'].every((f) => fs.existsSync(path.join(docs, f)));
 
 function carregar() {
-  const ctx = { globalThis: {} };
+  const ctx = {};
   ctx.globalThis = ctx;
   vm.createContext(ctx);
   for (const f of ['motor.js', 'validacao.js']) vm.runInContext(fs.readFileSync(path.join(docs, f), 'utf8'), ctx);
@@ -18,17 +19,22 @@ function carregar() {
 }
 
 const caso = {
-  incontroverso: 324612.67, atualizado: 352091.51, mesesPrimeiro: 1, mesesControverso: 12, mesesTotal: 14,
-  totalEmN: 400622.5673993771, totalEmT: 414109.7317573213, probabilidade: 'Certo',
+  incontroverso: 324612.67,
+  atualizado: 352091.51,
+  naoImpugnar: { meses: 1 },
+  receber6: { meses: 6, totalEsperado: 380000, probabilidade: 'Provável' },
+  receber12: { meses: 12, totalEsperado: 400622.57, probabilidade: 'Certo' },
 };
 
-(temDocs ? test : test.skip)('motor do navegador reproduz a planilha', () => {
+(temDocs ? test : test.skip)('motor do navegador dá o mesmo resultado do motor do servidor', () => {
   const { Motor, p } = carregar();
-  const r = Motor.calcular(caso, p.config, p.base);
-  assert.ok(Math.abs(r.publico.doisLevantamentos.tirAtivoAm - 0.03820546392980351) < 1e-9);
-  assert.ok(Math.abs(r.publico.umLevantamento.tirAtivoAm - 0.011651383527937265) < 1e-9);
-  assert.ok(Math.abs(r.interno.doisLevantamentos.subTirAm - 0.05626310417876157) < 1e-9);
-  assert.strictEqual(r.publico.doisLevantamentos.veredito, 'vale');
+  const navegador = Motor.calcular(caso, p.config, p.base);
+  const servidor = calcular(caso, p.config, p.base);
+  for (const c of ['naoImpugnar', 'receber6', 'receber12']) {
+    assert.strictEqual(navegador.publico[c].veredito, servidor.publico[c].veredito, c);
+    assert.ok(Math.abs(navegador.publico[c].recebimento - servidor.publico[c].recebimento) < 1e-6, c);
+    assert.ok(Math.abs(navegador.interno[c].subTirAm - servidor.interno[c].subTirAm) < 1e-9, c);
+  }
 });
 
 (temDocs ? test : test.skip)('parametros.json não carrega limites do servidor', () => {
